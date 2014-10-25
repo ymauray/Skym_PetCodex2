@@ -1,0 +1,411 @@
+<!--
+  ~ Copyright (c) 2014 Yannick Mauray.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation; either version 2 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along
+  ~ with this program; if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+  -->
+
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+    <Script file="Skym_PetCodex2.lua"/>
+
+    <Button name="TeamListButtonTemplate" motionScriptsWhileDisabled="true" virtual="true">
+        <Size x="208" y="46"/>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture atlas="PetList-ButtonBackground"/>
+            </Layer>
+            <Layer level="BORDER">
+                <Texture name="$parentIcon" parentKey="icon">
+                    <Size x="38" y="38"/>
+                    <Anchors>
+                        <Anchor point="LEFT" x="-42" y="0"/>
+                    </Anchors>
+                </Texture>
+                <Texture name="$parentPetTypeIcon" parentKey="petTypeIcon">
+                    <Anchors>
+                        <Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
+                    </Anchors>
+                    <Size x="90" y="44"/>
+                    <TexCoords left="0.00781250" right="0.71093750" top="0.74609375" bottom="0.91796875"/>
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK" textureSubLevel="-1">
+                <Texture name="$parentIconBorder" parentKey="iconBorder" file="Interface\Common\WhiteIconFrame" hidden="true">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativePoint="TOPLEFT" relativeKey="$parent.icon"/>
+                        <Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT" relativeKey="$parent.icon"/>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK" textureSubLevel="1">
+                <FontString name="$parentName" inherits="GameFontNormal" justifyH="LEFT" parentKey="name">
+                    <Size x="147" y="25"/>
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" relativeTo="$parentIcon" x="10" y="-3"/>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentSubName" inherits="GameFontNormalSmall" justifyH="LEFT" parentKey="subName">
+                    <Size x="147" y="12"/>
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" relativeTo="$parentName" x="0" y="-4"/>
+                    </Anchors>
+                    <Color r="1" g="1" b="1" a="1"/>
+                </FontString>
+            </Layer>
+            <Layer level="OVERLAY">
+                <Texture parentKey="isDead" file="Interface\PetBattles\DeadPetIcon" hidden="true">
+                    <Size x="38" y="38"/>
+                    <Anchors>
+                        <Anchor point="CENTER" relativeTo="$parentIcon" relativePoint="CENTER" x="0" y="0"/>
+                    </Anchors>
+                </Texture>
+                <Texture atlas="PetList-ButtonSelect" parentKey="selectedTexture" hidden="true"/>
+            </Layer>
+        </Layers>
+        <Frames>
+            <Button parentKey="dragButton">
+                <Size x="40" y="40"/>
+                <Anchors>
+                    <Anchor point="CENTER" relativeTo="$parentIcon" x="0" y="0"/>
+                </Anchors>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <Texture file="Interface\Buttons\CheckButtonHilight" parentKey="ActiveTexture" alphaMode="ADD"/>
+                    </Layer>
+                    <Layer level="OVERLAY" textureSubLevel="1">
+                        <Texture name="$parentLevelBG" atlas="PetJournal-LevelBubble" useAtlasSize="true" parentKey="levelBG">
+                            <Anchors>
+                                <Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT" relativeTo="$parentIcon" x="3" y="-3"/>
+                            </Anchors>
+                        </Texture>
+                        <FontString name="$parentLevel" inherits="GameFontNormalSmall" justifyH="CENTER" parentKey="level">
+                            <Size x="0" y="12"/>
+                            <Anchors>
+                                <Anchor point="CENTER" relativeTo="$parentLevelBG" x="1" y="-1"/>
+                            </Anchors>
+                        </FontString>
+                        <Texture name="$parentFavorite" atlas="PetJournal-FavoritesIcon" useAtlasSize="true" parentKey="favorite">
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativeTo="$parentIcon" x="-8" y="8"/>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                </Layers>
+                <Frames>
+                    <Cooldown parentKey="Cooldown" drawBling="false" inherits="CooldownFrameTemplate"/>
+                </Frames>
+                <HighlightTexture name="$parentHighlight" file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD"/>
+                <Scripts>
+                    <OnClick function="PetJournalDragButton_OnClick"/>
+                    <OnLoad>
+                        self:RegisterForDrag("LeftButton");
+                        self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+                    </OnLoad>
+                    <OnShow>
+                        self:RegisterEvent("SPELL_UPDATE_COOLDOWN");
+                    </OnShow>
+                    <OnHide>
+                        self:UnregisterEvent("SPELL_UPDATE_COOLDOWN");
+                    </OnHide>
+                    <OnEvent function="PetJournalDragButton_OnEvent"/>
+                    <OnDragStart function="PetJournalDragButton_OnDragStart"/>
+                </Scripts>
+            </Button>
+        </Frames>
+        <HighlightTexture atlas="PetList-ButtonHighlight"/>
+        <Scripts>
+            <OnLoad>
+                self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
+                self:RegisterForDrag("LeftButton");
+            </OnLoad>
+            <OnClick function="SkymPetCodex2TeamsTeamItem_OnClick"/>
+            <OnDragStart>
+                PetJournalDragButton_OnDragStart(self.dragButton);
+            </OnDragStart>
+        </Scripts>
+    </Button>
+
+    <Frame name="SkymPetCodex2MainFrame" inherits="PortraitFrameTemplate" toplevel="true" frameStrata="HIGH" enableMouse="true" movable="true" parent="UIParent" hidden="true">
+        <Size x="703" y="606"/>
+        <Frames>
+            <Button name="$parentTab1" inherits="CharacterFrameTabButtonTemplate" text="Teams" id="1">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="BOTTOMLEFT" x="11" y="2"/>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        SkymPetCodex2MainFrame_SetTab(SkymPetCodex2MainFrame, self:GetID());
+                        PlaySound("UI_Toybox_Tabs");
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <Button name="$parentTab2" inherits="CharacterFrameTabButtonTemplate" text="Cible" id="2">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentTab1" relativePoint="RIGHT" x="-16" y="0"/>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        SkymPetCodex2MainFrame_SetTab(SkymPetCodex2MainFrame, self:GetID());
+                        PlaySound("UI_Toybox_Tabs");
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <Button name="$parentTab3" inherits="CharacterFrameTabButtonTemplate" text="Recherche" id="3">
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="$parentTab2" relativePoint="RIGHT" x="-16" y="0"/>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        SkymPetCodex2MainFrame_SetTab(SkymPetCodex2MainFrame, self:GetID());
+                        PlaySound("UI_Toybox_Tabs");
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+        <Anchors>
+            <Anchor point="CENTER" x="0" y="0"/>
+        </Anchors>
+        <Scripts>
+            <OnLoad>
+                SkymPetCodex2MainFrameTitleText:SetText("Skym Pet Codex 2");
+                SetPortraitToTexture(SkymPetCodex2MainFramePortrait,"Interface\\Icons\\PetJournalPortrait");
+                PanelTemplates_SetNumTabs(self, 3);
+                tinsert(UISpecialFrames, self:GetName());
+            </OnLoad>
+            <OnShow function="SkymPetCodex2MainFrame_OnShow"/>
+            <OnHide function="SkymPetCodex2MainFrame_OnHide"/>
+        </Scripts>
+    </Frame>
+
+    <Frame name="SkymPetCodex2Teams" parent="SkymPetCodex2MainFrame" setAllPoints="true" hidden="true">
+        <Frames>
+            <Frame parentKey="PetCount" useParentLevel="true" inherits="InsetFrameTemplate3">
+                <Size x="130" y="20"/>
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="70" y="-35"/>
+                </Anchors>
+                <Layers>
+                    <Layer level="ARTWORK">
+                        <FontString parentKey="Count" inherits="GameFontHighlightSmall" justifyH="RIGHT">
+                            <Anchors>
+                                <Anchor point="RIGHT" x="-10" y="0"/>
+                            </Anchors>
+                        </FontString>
+                        <FontString parentKey="Label" inherits="GameFontNormalSmall" text="BATTLE_PETS_TOTAL_PETS" justifyH="LEFT">
+                            <Anchors>
+                                <Anchor point="LEFT" x="10" y="0"/>
+                                <Anchor point="RIGHT" relativeKey="$parent.Count" relativePoint="LEFT" x="-3" y="0"/>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+                <Scripts>
+                    <OnEnter function="SkymPetCodex2PetCount_OnEnter"/>
+                    <OnLeave>
+                        GameTooltip:Hide();
+                    </OnLeave>
+                </Scripts>
+            </Frame>
+            <Button name="$parentHealPetButton" parentKey="HealPetButton" inherits="SecureFrameTemplate">
+                <Size>
+                    <AbsDimension x="33" y="33"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="CENTER" relativePoint="TOPRIGHT" x="-24" y="-42"/>
+                </Anchors>
+                <Layers>
+                    <Layer level="ARTWORK">
+                        <Texture name="$parentIconTexture" parentKey="texture" file="Interface\Icons\spell_magic_polymorphrabbit" setAllPoints="true"/>
+                    </Layer>
+                    <Layer level="OVERLAY">
+                        <Texture parentKey="BlackCover" setAllPoints="true" hidden="true">
+                            <Color r="0" g="0" b="0" a="0.6"/>
+                        </Texture>
+                    </Layer>
+                    <Layer level="OVERLAY" textureSubLevel="1">
+                        <Texture name="$parentBorder" inherits="ActionBarFlyoutButton-IconFrame">
+                            <Size x="35" y="35"/>
+                            <Anchors>
+                                <Anchor point="CENTER"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="$parentLockIcon" parentKey="LockIcon" file="Interface\PetBattles\PetBattle-LockIcon" setAllPoints="true" hidden="true"/>
+                        <FontString name="$parentSpellName" inherits="GameFontNormal" maxLines="2" justifyH="RIGHT" parentKey="spellname" text="">
+                            <Size x="75" y="0"/>
+                            <Color r="1" g="1" b="1"/>
+                            <Anchors>
+                                <Anchor point="RIGHT" relativePoint="LEFT" relativeTo="$parentBorder" x="-2" y="0"/>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+                <Frames>
+                    <Cooldown name="$parentCooldown" parentKey="cooldown" inherits="CooldownFrameTemplate"/>
+                </Frames>
+                <Scripts>
+                    <OnLoad function="PetJournalHealPetButton_OnLoad"/>
+                    <OnEvent function="PetJournalHealPetButton_OnEvent"/>
+                    <OnClick>
+                        PetJournalParent:Show();
+                    </OnClick>
+                    <OnDragStart function="PetJournalHealPetButton_OnDragStart"/>
+                    <OnShow function="PetJournalHealPetButton_OnShow"/>
+                    <OnHide function="PetJournalHealPetButton_OnHide"/>
+                    <OnEnter function="PetJournalHealPetButton_OnEnter"/>
+                    <OnLeave>
+                        GameTooltip:Hide();
+                    </OnLeave>
+                </Scripts>
+                <PushedTexture file="Interface\Buttons\UI-Quickslot-Depress"/>
+                <HighlightTexture name="$parentHighlight" file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD"/>
+            </Button>
+            <Frame name="$parentTeamInset" useParentLevel="true" inherits="InsetFrameTemplate" parentKey="TeamInset">
+                <Size x="260" y="238"/>
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="4" y="-60" />
+                    <Anchor point="BOTTOMLEFT" x="4" y="294" />
+                </Anchors>
+            </Frame>
+            <Frame name="$parentLeftInset" useParentLevel="true" inherits="InsetFrameTemplate" parentKey="LeftInset">
+                <Size x="260" y="237"/>
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="4" y="-329" />
+                    <Anchor point="BOTTOMLEFT" x="4" y="26" />
+                </Anchors>
+            </Frame>
+            <Frame name="$parentPetCardInset" useParentLevel="true" inherits="InsetFrameTemplate" parentKey="PetCardInset">
+                <Size x="411" y="171"/>
+                <Anchors>
+                    <Anchor point="TOPRIGHT" x="-6" y="-60" />
+                </Anchors>
+            </Frame>
+            <Frame name="$parentRightInset" useParentLevel="true" inherits="InsetFrameTemplate" parentKey="RightInset">
+                <Anchors>
+                    <Anchor point="TOPRIGHT" x="-6" y="-252"/>
+                    <Anchor point="BOTTOMLEFT" relativeTo="$parentLeftInset" relativePoint="BOTTOMRIGHT" x="20" y="0"/>
+                </Anchors>
+            </Frame>
+            <EditBox name="$parentTeamSearchBox" inherits="SearchBoxTemplate" parentKey="teamSearchBox" letters="40">
+                <Size x="145" y="20"/>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="$parentTeamInset" x="15" y="-9"/>
+                </Anchors>
+                <Scripts>
+                    <OnTextChanged function="SkymPetCodex2Teams_OnSearchTextChanged"/>
+                </Scripts>
+            </EditBox>
+            <Button name="$parentAddTeamButton" inherits="UIPanelButtonTemplate" text="Ajouter">
+                <Size x="93" y="22"/>
+                <Anchors>
+                    <Anchor point="TOPRIGHT" relativeTo="$parentTeamInset" x="-5" y="-9"/>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        StaticPopup_Show("SKYM_PET_CODEX_2_TEAM_ADD");
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <ScrollFrame name="$parentTeamsScrollFrame" parentKey="teamsScroll" inherits="HybridScrollFrameTemplate">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="$parentTeamInset" x="3" y="-36"/>
+                    <Anchor point="BOTTOMRIGHT" relativeTo="$parentTeamInset" x="-2" y="5"/>
+                </Anchors>
+                <Frames>
+                    <Slider name="$parentTeamsScrollBar" inherits="HybridScrollBarTrimTemplate" parentKey="teamsScrollBar">
+                        <Anchors>
+                            <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="4" y="20"/>
+                            <Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="4" y="11"/>
+                        </Anchors>
+                        <Scripts>
+                            <OnLoad>
+                                self.trackBG:Show();
+                                self.trackBG:SetVertexColor(0, 0, 0, 0.75);
+                            </OnLoad>
+                        </Scripts>
+                    </Slider>
+                </Frames>
+            </ScrollFrame>
+            <EditBox name="$parentSearchBox" inherits="SearchBoxTemplate" parentKey="searchBox" letters="40">
+                <Size x="145" y="20"/>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="$parentLeftInset" x="15" y="-9"/>
+                </Anchors>
+                <Scripts>
+                    <OnTextChanged function="PetJournal_OnSearchTextChanged"/>
+                </Scripts>
+            </EditBox>
+            <Button name="$parentFilterButton" inherits="UIMenuButtonStretchTemplate" text="FILTER">
+                <Size x="93" y="22"/>
+                <Anchors>
+                    <Anchor point="TOPRIGHT" relativeTo="$parentLeftInset" x="-5" y="-9"/>
+                </Anchors>
+                <Layers>
+                    <Layer level="ARTWORK">
+                        <Texture parentKey="Icon" file="Interface\ChatFrame\ChatFrameExpandArrow">
+                            <Size x="10" y="12"/>
+                            <Anchors>
+                                <Anchor point="RIGHT" relativeKey="$parent.Right" relativePoint="RIGHT" x="-5"/>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                </Layers>
+                <Scripts>
+                    <OnClick>
+                        PlaySound("igMainMenuOptionCheckBoxOn");
+                        ToggleDropDownMenu(1, nil, PetJournalFilterDropDown, "SkymPetCodex2TeamsFilterButton", 74, 15);
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <ScrollFrame name="$parentListScrollFrame" parentKey="listScroll" inherits="HybridScrollFrameTemplate">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="$parentLeftInset" x="3" y="-36"/>
+                    <Anchor point="BOTTOMRIGHT" relativeTo="$parentLeftInset" x="-2" y="5"/>
+                </Anchors>
+                <Frames>
+                    <Slider name="$parentScrollBar" inherits="HybridScrollBarTrimTemplate" parentKey="scrollBar">
+                        <Anchors>
+                            <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="4" y="20"/>
+                            <Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="4" y="11"/>
+                        </Anchors>
+                        <Scripts>
+                            <OnLoad>
+                                self.trackBG:Show();
+                                self.trackBG:SetVertexColor(0, 0, 0, 0.75);
+                            </OnLoad>
+                        </Scripts>
+                    </Slider>
+                </Frames>
+            </ScrollFrame>
+        </Frames>
+        <Scripts>
+            <OnShow function="SkymPetCodex2Teams_OnShow"/>
+            <OnHide function="SkymPetCodex2Teams_OnHide"/>
+            <OnLoad function="SkymPetCodex2Teams_OnLoad"/>
+            <OnEvent function="SkymPetCodex2Teams_OnEvent"/>
+        </Scripts>
+    </Frame>
+
+    <Frame name="SkymPetCodex2Mascottes" parent="SkymPetCodex2MainFrame" setAllPoints="true" hidden="true">
+        <Scripts>
+            <OnLoad function="SkymPetCodex2Mascottes_OnLoad"/>
+        </Scripts>
+    </Frame>
+
+    <Frame name="SkymPetCodex2Recherche" parent="SkymPetCodex2MainFrame" setAllPoints="true" hidden="true">
+        <Scripts>
+            <OnLoad function="SkymPetCodex2Recherche_OnLoad"/>
+        </Scripts>
+    </Frame>
+</Ui>

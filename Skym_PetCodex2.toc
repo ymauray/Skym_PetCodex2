@@ -1,0 +1,19 @@
+## Interface: 60000
+## Version: 6.0.2
+
+## Title: Skym: |cff69ccffPetCodex 2|r
+## Notes: Add-on qui fait plein de trucs pour mieux gérer les combats de mascottes, mais en version 2 :)
+
+## Author: Yannick (Kraäl), Sandrine (Meleke)
+## DefaultState: Enabled
+## Dependencies: Blizzard_PetJournal
+## LoadOnDemand: 0
+
+## OptionalDeps: LibDBIcon-1.0
+## SavedVariables: Skym_PetCodex2DB
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+Skym_PetCodex2.xml
