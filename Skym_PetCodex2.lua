@@ -32,30 +32,29 @@ Skym_PetCodex2DB.teams = Skym_PetCodex2DB.teams or {};
 
 local COMPANION_BUTTON_HEIGHT = 46;
 local HEAL_PET_SPELL = 125439;
+local MAX_ACTIVE_PETS = 3;
+local MAX_PET_LEVEL = 25;
 
 -- Popups
 
 StaticPopupDialogs["SKYM_PET_CODEX_2_TEAM_ADD"] = {
     text = "Ajouter une équipe",
-    button1 = "Accepter",
-    button2 = "Annuler",
+    button1 = ACCEPT,
+    button2 = CANCEL,
     hasEditBox = 1,
     maxLetters = 30,
     OnAccept = function(self)
         local text = self.editBox:GetText();
-        print(Skym_PetCodex2DB);
-        print(Skym_PetCodex2DB.skymPetCodex2Tab);
+        SkymPetCodex2Teams_CreateTeam(text);
         Skym_PetCodex2DB.teams = Skym_PetCodex2DB.teams or {};
-        print(Skym_PetCodex2DB.teams);
-        print(#Skym_PetCodex2DB.teams);
         Skym_PetCodex2DB.teams[1 + #Skym_PetCodex2DB.teams] = {name = text};
         SkymPetCodex2Teams_UpdateTeamList();
     end,
-    OnAlt = function(self)
-        print("OnAlt");
-    end,
     EditBoxOnEnterPressed = function(self)
-        print("EditBoxOnEnterPressed");
+        local parent = self:GetParent();
+        local text = parent.editBox:GetText();
+        SkymPetCodex2Teams_CreateTeam(text);
+        parent:Hide();
     end,
     OnShow = function(self)
         self.editBox:SetFocus();
@@ -66,6 +65,47 @@ StaticPopupDialogs["SKYM_PET_CODEX_2_TEAM_ADD"] = {
     end,
     timeout = 0,
     exclusive = 1,
+    hideOnEscape = true
+};
+
+StaticPopupDialogs["SKYM_PET_CODEX_2_TEAM_RENAME"] = {
+    text = "Renommer l'équipe \"%s\"",
+    button1 = ACCEPT,
+    button2 = CANCEL,
+    hasEditBox = true,
+    maxLetters = 30,
+    OnAccept = function(self)
+        local text = self.editBox:GetText();
+        Skym_PetCodex2DB.teams[SkymPetCodex2Teams.menuTeamIndex].name = text;
+        SkymPetCodex2Teams_UpdateTeamList();
+    end,
+    EditBoxOnEnterPressed = function(self)
+        local parent = self:GetParent();
+        local text = parent.editBox:GetText();
+        Skym_PetCodex2DB.teams[SkymPetCodex2Teams.menuTeamIndex].name = text;
+        SkymPetCodex2Teams_UpdateTeamList();
+        parent:Hide();
+    end,
+    OnShow = function(self)
+        ChatEdit_FocusActiveWindow();
+        self.editBox:SetText(Skym_PetCodex2DB.teams[SkymPetCodex2Teams.menuTeamIndex].name);
+    end,
+    timeout = 0,
+    exclusive = true,
+    hideOnEscape = true
+};
+
+StaticPopupDialogs["SKYM_PET_CODEX_2_TEAM_DELETE"] = {
+    text= "Etes-vous certain de vouloir effacer l'équippe \"%s\" ?",
+    button1 = ACCEPT,
+    button2 = CANCEL,
+    hasEditBox = false,
+    OnAccept = function(self)
+        table.remove(Skym_PetCodex2DB.teams, SkymPetCodex2Teams.menuTeamIndex);
+        SkymPetCodex2Teams_UpdateTeamList();
+    end,
+    timeout = 0,
+    exclusive = true,
     hideOnEscape = true
 };
 
@@ -147,6 +187,7 @@ end
 function SkymPetCodex2Teams_OnShow(self)
     SkymPetCodex2Teams_UpdateTeamList();
     SkymPetCodex2Teams_UpdatePetList();
+    SkymPetCodex2Teams_UpdatePetLoadOut();
     UIDropDownMenu_Initialize(self.teamOptionsMenu, TeamOptionsMenu_Init, "MENU");
 end
 
@@ -221,33 +262,6 @@ function SkymPetCodex2Teams_OnEvent(self, event, ...)
 --    elseif event == "PET_BATTLE_QUEUE_STATUS" then
 --        PetJournal_UpdatePetLoadOut();
 --    end
-end
-
-function SkymPetCodex2Teams_UpdateTeamList()
-    local scrollFrame = SkymPetCodex2Teams.teamsScroll;
-    local offset = HybridScrollFrame_GetOffset(scrollFrame);
-    local teamButtons = scrollFrame.buttons;
-    local team, index;
-
-    print(#teamButtons);
-    print(#Skym_PetCodex2DB.teams);
-    for i = 1, #teamButtons do
-        team = teamButtons[i];
-        index = offset + i;
-        print(index);
-        if (index <= #Skym_PetCodex2DB.teams) then
-            team.name:SetText(Skym_PetCodex2DB.teams[index].name);
-            team.name:SetHeight(30);
-            team.subName:Hide();
-            team.index = index;
-            team:Show();
-        else
-            team:Hide();
-        end
-    end
-
-    local totalHeight = #Skym_PetCodex2DB.teams * COMPANION_BUTTON_HEIGHT;
-    HybridScrollFrame_Update(scrollFrame, totalHeight, scrollFrame:GetHeight());
 end
 
 function SkymPetCodex2Teams_UpdatePetList()
@@ -353,6 +367,7 @@ function SkymPetCodex2Teams_UpdatePetList()
 end
 
 function SkymPetCodex2Teams_ShowTeamDropdown(index, anchorTo, offsetX, offsetY, teamIndex)
+    SkymPetCodex2Teams.menuTeamIndex = index;
     ToggleDropDownMenu(1, nil, SkymPetCodex2Teams.teamOptionsMenu, anchorTo, offsetX, offsetY);
 end
 
@@ -383,20 +398,22 @@ end
 
 -- Menus
 
-function TeamOptionsMenu_Init()
+function TeamOptionsMenu_Init(self, level)
     local info = UIDropDownMenu_CreateInfo();
     info.notCheckable = true;
 
     info.text = "Renommer";
     info.func = function()
         print("Renommer");
+        StaticPopup_Show("SKYM_PET_CODEX_2_TEAM_RENAME", Skym_PetCodex2DB.teams[SkymPetCodex2Teams.menuTeamIndex].name);
     end;
     UIDropDownMenu_AddButton(info, level);
 
     info.text = "Supprimer";
     info.func = function()
-        print("Supprimer");
+        StaticPopup_Show("SKYM_PET_CODEX_2_TEAM_DELETE", Skym_PetCodex2DB.teams[SkymPetCodex2Teams.menuTeamIndex].name);
     end;
+    UIDropDownMenu_AddButton(info, level);
 
     info.text = CANCEL
     info.func = nil
@@ -409,4 +426,184 @@ function SkymPetCodex2TeamsTeamItem_OnClick(self, button)
     else
         -- Charger équippe.
     end
+end
+
+function SkymPetCodex2Teams_CreateTeam(text)
+    Skym_PetCodex2DB.teams = Skym_PetCodex2DB.teams or {};
+    local team = {name = text};
+    team.pet = {}
+    for i=1,MAX_ACTIVE_PETS do
+        local petID, ability1ID, ability2ID, ability3ID, locked = C_PetJournal.GetPetLoadOutInfo(i);
+        team.pet[i] = {
+            id = petID,
+            ability1ID = ability1ID,
+            ability2ID = ability2ID,
+            ability3ID = ability3ID,
+            locked = locked
+        }
+    end
+    Skym_PetCodex2DB.teams[1 + #Skym_PetCodex2DB.teams] = team;
+    SkymPetCodex2Teams_UpdateTeamList();
+end
+
+function SkymPetCodex2Teams_UpdatePetLoadOut()
+    for i=1,MAX_ACTIVE_PETS do
+        local loadoutPlate = SkymPetCodex2Teams.Loadout["Pet"..i];
+        local petID, ability1ID, ability2ID, ability3ID, locked = C_PetJournal.GetPetLoadOutInfo(i);
+
+        loadoutPlate.ReadOnlyFrame:Hide();
+        if (petID == nil) then
+            loadoutPlate.name:Hide();
+            loadoutPlate.subName:Hide();
+            loadoutPlate.level:Hide();
+            loadoutPlate.levelBG:Hide();
+            loadoutPlate.icon:Hide();
+            loadoutPlate.qualityBorder:Hide();
+            loadoutPlate.favorite:Hide()
+            loadoutPlate.model:Hide();
+            loadoutPlate.xpBar:Hide();
+            loadoutPlate.healthFrame:Hide();
+            loadoutPlate.spell1:Hide();
+            loadoutPlate.spell2:Hide();
+            loadoutPlate.spell3:Hide();
+            loadoutPlate.iconBorder:Hide();
+            loadoutPlate.helpFrame:Hide();
+            loadoutPlate.requirement:Hide();
+            loadoutPlate.emptyslot:Show();
+            loadoutPlate.emptyslot.slot:SetText(format(BATTLE_PET_SLOT, i));
+            loadoutPlate.dragButton:Show();
+            loadoutPlate.isDead:Hide();
+            loadoutPlate.petTypeIcon:Hide();
+            loadoutPlate.petID = nil;
+        else -- petID is not nil
+            local speciesID, customName, level, xp, maxXp, displayID, isFavorite, name, icon, petType = C_PetJournal.GetPetInfoByPetID(petID);
+            C_PetJournal.GetPetAbilityList(speciesID, loadoutPlate.abilities, loadoutPlate.abilityLevels);	--Read ability/ability levels into the correct tables
+
+            --Find out how many abilities are usable due to level
+            local numUsableAbilities = 0;
+            for j=1, #loadoutPlate.abilityLevels do
+                if ( loadoutPlate.abilityLevels[j] and level >= loadoutPlate.abilityLevels[j] ) then
+                    numUsableAbilities = numUsableAbilities + 1;
+                end
+            end
+
+            --If we don't have something in a flyout, automatically put there the lower level ability
+            if ( ability1ID == 0 and loadoutPlate.abilities[1] ) then
+                ability1ID = loadoutPlate.abilities[1];
+                C_PetJournal.SetAbility(i, 1, ability1ID);
+            end
+            if ( ability2ID == 0 and loadoutPlate.abilities[2] ) then
+                ability2ID = loadoutPlate.abilities[2];
+                C_PetJournal.SetAbility(i, 2, ability2ID);
+            end
+            if ( ability3ID == 0 and loadoutPlate.abilities[3] ) then
+                ability3ID = loadoutPlate.abilities[3];
+                C_PetJournal.SetAbility(i, 3, ability3ID);
+            end
+            loadoutPlate.name:Show();
+            loadoutPlate.subName:Show();
+            loadoutPlate.level:Show();
+            loadoutPlate.levelBG:Show();
+            loadoutPlate.icon:Show();
+            loadoutPlate.iconBorder:Show();
+            loadoutPlate.spell1:Show();
+            loadoutPlate.spell2:Show();
+            loadoutPlate.spell3:Show();
+
+            if (isFavorite) then
+                loadoutPlate.favorite:Show()
+            else
+                loadoutPlate.favorite:Hide()
+            end
+
+            if customName then
+                loadoutPlate.name:SetText(customName);
+                loadoutPlate.name:SetHeight(12);
+                loadoutPlate.subName:Show();
+                loadoutPlate.subName:SetText(name);
+            else
+                loadoutPlate.name:SetText(name);
+                loadoutPlate.name:SetHeight(28);
+                loadoutPlate.subName:Hide();
+            end
+            loadoutPlate.level:SetText(level);
+            loadoutPlate.icon:SetTexture(icon);
+
+            loadoutPlate.petTypeIcon:Show();
+            loadoutPlate.petTypeIcon:SetTexture(GetPetTypeTexture(petType));
+            loadoutPlate.petID = petID;
+            loadoutPlate.speciesID = speciesID;
+            if(level < MAX_PET_LEVEL) then
+                loadoutPlate.xpBar:Show();
+            else
+                loadoutPlate.xpBar:Hide();
+            end
+
+            loadoutPlate.xpBar:SetMinMaxValues(0, maxXp);
+            loadoutPlate.xpBar:SetValue(xp);
+            local display = GetCVar("statusTextDisplay")
+            if (display == "3") then
+                loadoutPlate.xpBar.rankText:SetFormattedText(PET_BATTLE_CURRENT_XP_FORMAT_BOTH, xp, maxXp, xp/maxXp*100);
+            elseif (display == "2") then
+                loadoutPlate.xpBar.rankText:SetFormattedText(PET_BATTLE_CURRENT_XP_FORMAT_PERCENT, xp/maxXp*100);
+            else
+                loadoutPlate.xpBar.rankText:SetFormattedText(PET_BATTLE_CURRENT_XP_FORMAT_VERBOSE, xp, maxXp);
+            end
+            loadoutPlate.xpBar.tooltip = format(PET_BATTLE_CURRENT_XP_FORMAT_TOOLTIP, xp, maxXp, xp/maxXp*100);
+
+            local health, maxHealth, attack, speed, rarity = C_PetJournal.GetPetStats(petID);
+            loadoutPlate.healthFrame.healthValue:SetFormattedText(PET_BATTLE_CURRENT_HEALTH_FORMAT, health, maxHealth);
+            loadoutPlate.healthFrame.healthBar:SetMinMaxValues(0, maxHealth);
+            loadoutPlate.healthFrame.healthBar:SetValue(health);
+            loadoutPlate.healthFrame:Show();
+
+            loadoutPlate.qualityBorder:SetVertexColor(ITEM_QUALITY_COLORS[rarity-1].r, ITEM_QUALITY_COLORS[rarity-1].g, ITEM_QUALITY_COLORS[rarity-1].b);
+
+            loadoutPlate.isDead:SetShown(health <= 0);
+
+            loadoutPlate.model:Show();
+            local modelChanged = false;
+            if ( displayID ~= loadoutPlate.displayID ) then
+                loadoutPlate.displayID = displayID;
+                loadoutPlate.model:SetDisplayInfo(displayID);
+                loadoutPlate.model:SetDoBlend(false);
+                modelChanged = true;
+            end
+            local isDead = health <= 0;
+            if ( modelChanged or isDead ~= loadoutPlate.model.wasDead ) then
+                if ( isDead ) then
+                    loadoutPlate.model:SetAnimation(6,-1);
+                else
+                    loadoutPlate.model:SetAnimation(0,-1);
+                end
+                loadoutPlate.model.wasDead = isDead;
+            end
+
+--            PetJournal_UpdatePetAbility(loadoutPlate.spell1, ability1ID, petID);
+--            PetJournal_UpdatePetAbility(loadoutPlate.spell2, ability2ID, petID);
+--            PetJournal_UpdatePetAbility(loadoutPlate.spell3, ability3ID, petID);
+
+            loadoutPlate.spell1.enabled = true;
+            loadoutPlate.spell2.enabled = true;
+            loadoutPlate.spell3.enabled = true;
+            loadoutPlate.spell1:GetHighlightTexture():SetAlpha(1);
+            loadoutPlate.spell2:GetHighlightTexture():SetAlpha(1);
+            loadoutPlate.spell3:GetHighlightTexture():SetAlpha(1);
+            loadoutPlate.spell1:GetPushedTexture():SetAlpha(1);
+            loadoutPlate.spell2:GetPushedTexture():SetAlpha(1);
+            loadoutPlate.spell3:GetPushedTexture():SetAlpha(1);
+            loadoutPlate.spell1.FlyoutArrow:Show();
+            loadoutPlate.spell2.FlyoutArrow:Show();
+            loadoutPlate.spell3.FlyoutArrow:Show();
+
+            loadoutPlate.helpFrame:Hide();
+            loadoutPlate.requirement:Hide();
+            loadoutPlate.emptyslot:Hide();
+            loadoutPlate.dragButton:Show();
+        end
+    end
+
+--    PetJournal.Loadout.Pet1.setButton:Hide();
+--    PetJournal.Loadout.Pet2.setButton:Hide();
+--    PetJournal.Loadout.Pet3.setButton:Hide();
 end

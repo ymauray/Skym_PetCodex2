@@ -19,6 +19,7 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
     <Script file="Skym_PetCodex2.lua"/>
+    <Script file="Skym_PetCodex2_Teams.lua"/>
 
     <Button name="TeamListButtonTemplate" motionScriptsWhileDisabled="true" virtual="true">
         <Size x="208" y="46"/>
@@ -306,7 +307,7 @@
                     <OnTextChanged function="SkymPetCodex2Teams_OnSearchTextChanged"/>
                 </Scripts>
             </EditBox>
-            <Button name="$parentAddTeamButton" inherits="UIPanelButtonTemplate" text="Ajouter">
+            <Button name="$parentAddTeamButton" inherits="UIMenuButtonStretchTemplate" text="Ajouter">
                 <Size x="93" y="22"/>
                 <Anchors>
                     <Anchor point="TOPRIGHT" relativeTo="$parentTeamInset" x="-5" y="-9"/>
@@ -388,6 +389,144 @@
                     </Slider>
                 </Frames>
             </ScrollFrame>
+            <Frame name="$parentLoadoutBorder" parentKey="loadoutBorder" frameStrata="HIGH">
+                <Anchors>
+                    <Anchor point="CENTER" relativeTo="$parentRightInset" relativePoint="CENTER" x="0" y="0"/>
+                </Anchors>
+                <Size x="410" y="328"/>
+                <Layers>
+                    <Layer level="ARTWORK">
+                        <Texture name="$parentTopLeft" atlas="PetJournal-BattleSlotFrame-Corner" useAtlasSize="true">
+                            <Anchors>
+                                <Anchor point="TOPLEFT" x="-1" y="1"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="$parentTopRight" atlas="PetJournal-BattleSlotFrame-Corner" useAtlasSize="true">
+                            <Anchors>
+                                <Anchor point="TOPRIGHT" x="1" y="1"/>
+                            </Anchors>
+                            <Size x="17" y="17"/>
+                            <TexCoords left="1.0" right="0.0" top="0.0" bottom="1.0"/>
+                        </Texture>
+                        <Texture name="$parentBottomLeft" atlas="PetJournal-BattleSlotFrame-Corner" useAtlasSize="true">
+                            <Anchors>
+                                <Anchor point="BOTTOMLEFT" x="-1" y="-1"/>
+                            </Anchors>
+                            <Size x="17" y="17"/>
+                            <TexCoords left="0.0" right="1.0" top="1.0" bottom="0.0"/>
+                        </Texture>
+                        <Texture name="$parentBottomRight" atlas="PetJournal-BattleSlotFrame-Corner" useAtlasSize="true">
+                            <Anchors>
+                                <Anchor point="BOTTOMRIGHT" x="1" y="-1"/>
+                            </Anchors>
+                            <Size x="17" y="17"/>
+                            <TexCoords left="1.0" right="0.0" top="1.0" bottom="0.0"/>
+                        </Texture>
+                        <Texture name="$parentTop" atlas="_BattleSlotFrame-Top" horizTile="true">
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" relativeTo="$parentTopLeft" x="0" y="0"/>
+                                <Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" relativeTo="$parentTopRight" x="0" y="1"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="$parentBottom" atlas="_BattleSlotFrame-Top" horizTile="true">
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" relativeTo="$parentBottomLeft" x="0" y="-1"/>
+                                <Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" relativeTo="$parentBottomRight" x="0" y="0"/>
+                            </Anchors>
+                            <TexCoords left="0.0" right="1.0" top="1.0" bottom="0.0" />
+                        </Texture>
+                        <Texture name="$parentLeft" file="Interface\PetBattles\!BattleSlotFrame-Left" vertTile="true">
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" relativeTo="$parentTopLeft" x="0" y="0"/>
+                                <Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" relativeTo="$parentBottomLeft" x="-1" y="0"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="$parentRight" file="Interface\PetBattles\!BattleSlotFrame-Left" vertTile="true">
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" relativeTo="$parentTopRight" x="1" y="0"/>
+                                <Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" relativeTo="$parentBottomRight" x="0" y="0"/>
+                            </Anchors>
+                            <TexCoords left="1" right="0" top="0" bottom="1"/>
+                        </Texture>
+                    </Layer>
+                    <Layer level="ARTWORK" textureSubLevel="1">
+                        <Texture name="$parentUpperSeparator" atlas="_BattleSlotFrame-Divider" useAtlasSize="true" horizTile="true">
+                            <Anchors>
+                                <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$parentLeft" x="-11" y="54"/>
+                                <Anchor point="RIGHT" relativePoint="LEFT" relativeTo="$parentRight" x="12" y="54"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="$parentLowerSeparator" atlas="_BattleSlotFrame-Divider" useAtlasSize="true" horizTile="true">
+                            <Anchors>
+                                <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$parentLeft" x="-11" y="-53"/>
+                                <Anchor point="RIGHT" relativePoint="LEFT" relativeTo="$parentRight" x="12" y="-53"/>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                    <Layer level="OVERLAY">
+                        <FontString name="$parentSlotHeaderText" inherits="GameFontNormal" justifyH="CENTER" text="BATTLE_PET_SLOTS">
+                            <Size x="0" y="40"/>
+                            <Anchors>
+                                <Anchor point="CENTER" relativePoint="TOP" relativeTo="$parentTop" x="0" y="-4"/>
+                            </Anchors>
+                        </FontString>
+                        <Texture name="$parentSlotHeaderBG" atlas="_BattleSlotTitle-BG" horizTile="true">
+                            <Size y="24"/>
+                            <Anchors>
+                                <Anchor point="LEFT" relativePoint="LEFT" relativeTo="$parentSlotHeaderText" x="-10" y="0"/>
+                                <Anchor point="RIGHT" relativePoint="RIGHT" relativeTo="$parentSlotHeaderText" x="10" y="0"/>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                    <Layer level="OVERLAY" textureSubLevel="1">
+                        <Texture name="$parentSlotHeaderF" atlas="_BattleSlotTitle-Mid" horizTile="true">
+                            <Anchors>
+                                <Anchor point="TOPLEFT" relativePoint="TOPLEFT" relativeTo="$parentSlotHeaderText" x="0" y="0"/>
+                                <Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT" relativeTo="$parentSlotHeaderText" x="0" y="0"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="$parentSlotHeaderLeft" atlas="PetJournal-BattleSlotTitle-Left" useAtlasSize="true">
+                            <Anchors>
+                                <Anchor point="RIGHT" relativePoint="LEFT" relativeTo="$parentSlotHeaderF" x="0" y="0"/>
+                            </Anchors>
+                        </Texture>
+                        <Texture name="$parentSlotHeaderRight" atlas="PetJournal-BattleSlotTitle-Right" useAtlasSize="true">
+                            <Anchors>
+                                <Anchor point="LEFT" relativePoint="RIGHT" relativeTo="$parentSlotHeaderF" x="0" y="0"/>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                </Layers>
+                <Scripts>
+                    <OnLoad>
+                        self:SetFrameLevel(self:GetFrameLevel()+7);
+                    </OnLoad>
+                </Scripts>
+            </Frame>
+            <Frame name="$parentLoadout" parentKey="Loadout">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="$parentRightInset" x="0" y="0"/>
+                    <Anchor point="BOTTOMRIGHT" relativeTo="$parentRightInset" x="0" y="0"/>
+                </Anchors>
+                <Frames>
+                    <Button name="$parentPet1" inherits="CompanionLoadOutTemplate" id="1" parentKey="Pet1">
+                        <Anchors>
+                            <Anchor point="TOP" x="0" y="-3"/>
+                        </Anchors>
+                    </Button>
+                    <Button name="$parentPet2" inherits="CompanionLoadOutTemplate" id="2" parentKey="Pet2">
+                        <Anchors>
+                            <Anchor point="TOP" x="0" y="-110"/>
+                        </Anchors>
+                    </Button>
+                    <Button name="$parentPet3" inherits="CompanionLoadOutTemplate" id="3" parentKey="Pet3">
+                        <Anchors>
+                            <Anchor point="TOP" x="0" y="-217"/>
+                        </Anchors>
+                    </Button>
+                </Frames>
+            </Frame>
+            <Frame name="$parentTeamOptionsMenu" inherits="UIDropDownMenuTemplate" enableMouse="true" parentKey="teamOptionsMenu"/>
         </Frames>
         <Scripts>
             <OnShow function="SkymPetCodex2Teams_OnShow"/>
